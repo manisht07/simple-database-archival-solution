@@ -13,17 +13,13 @@
  * permissions and limitations under the License.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Button,
     Header,
     SpaceBetween,
-    Cards,
-    Pagination,
     Spinner,
     Table,
-    Box,
-    ExpandableSection,
     StatusIndicator
 } from '@cloudscape-design/components';
 import { API } from "aws-amplify";
@@ -32,38 +28,41 @@ export default function TableDetailsPanel({
     databaseConnectionState,
     setDatabaseConnectionState,
     databaseConnected,
+    selectedSchemas,
     setGetTables
 }) {
 
     const [tables, setTables] = useState([]);
-    const [selectedItems] = useState([]);
-    const [pageCount, setPageCount] = useState(0);
-    const [currentPageIndex, setCurrentPageIndex] = useState(1);
+    const [selectedItems, setSelectedItems] = useState([]);
 
+    useEffect(() => {
+        setDatabaseConnectionState((current) => {
+            const body = { ...current.body, tables: selectedItems };
+            return { ...current, body };
+        });
+    }, [selectedItems]);
     const [gettingSchema, setGettingSchema] = useState(false);
     const [gettingSchemaFailed, setGettingSchemaFailed] = useState(false);
 
 
-    function sliceIntoChunks(arr, chunkSize) {
-        const res = [];
-        for (let i = 0; i < arr.length; i += chunkSize) {
-            const chunk = arr.slice(i, i + chunkSize);
-            res.push(chunk);
-        }
-        return res;
-    }
 
     const getDatabaseSchema = async (e) => {
         setGettingSchema(true);
-        await API.post("api", "api/archive/source/get-schema", databaseConnectionState)
+        const request = {
+            ...databaseConnectionState,
+            body: {
+                ...databaseConnectionState.body,
+                oracle_owner: selectedSchemas.map((s) => s.value).join(','),
+            },
+        };
+        await API.post("api", "api/archive/source/get-schema", request)
             .then(response => {
                 setGettingSchemaFailed(false)
-                console.log(response)
-                const tableChunks = sliceIntoChunks(response.tables, 4)
-                setTables(tableChunks);
-                setPageCount((response.tables.length / 4).toFixed())
+                setTables(response.tables);
+                setSelectedItems(response.tables);
+                setPageCount(Math.ceil(response.tables.length / 10));
                 setGettingSchema(false);
-                updateNestedProps(response)
+                updateNestedProps(response.tables)
                 setGetTables(true)
             })
             .catch(error => {
@@ -75,138 +74,69 @@ export default function TableDetailsPanel({
     const updateNestedProps = (data) => {
         setDatabaseConnectionState(current => {
             const body = { ...current.body };
-            body.tables = data.tables;
+            body.tables = data;
             return { ...current, body };
         });
     };
 
 
     return (
-
-        <Cards
-            cardDefinition={{
-                header: e => "mssql_schema" in e ? e.mssql_schema + "." + e.table : e.table,
-                sections: [
-                    {
-                        id: "description",
-                        header: e => e.oracle_owner ? "Oracle Owner" : "",
-                        content: e => e.oracle_owner ? e.oracle_owner : "",
-                    },
-                    {
-                        id: "table",
-                        content: e => {
-                            return (
-                                <ExpandableSection header="Table Schema">
-                                    <Table
-                                        columnDefinitions={[
-                                            {
-                                                id: "key",
-                                                header: "Field",
-                                                cell: e => e.key || "",
-                                                sortingField: "name"
-                                            },
-                                            {
-                                                id: "origin_type",
-                                                header: "Source Data Type",
-                                                cell: item => item.origin_type || "",
-                                                sortingField: "origin_type"
-                                            },
-                                            {
-                                                id: "alt",
-                                                header: "Target Data Type",
-                                                cell: item => item.value || "",
-                                                sortingField: "alt"
-                                            },
-                                        ]}
-                                        items={e.schema}
-                                        loadingText="Loading resources"
-                                        sortingDisabled
-                                        variant="embedded"
-                                        empty={
-                                            <Box textAlign="center" color="inherit">
-                                                <b>No resources</b>
-                                                <Box
-                                                    padding={{ bottom: "s" }}
-                                                    variant="p"
-                                                    color="inherit"
-                                                >
-                                                    No resources to display.
-                                                </Box>
-
-                                            </Box>
-                                        }
-                                    />
-                                </ExpandableSection>
-                            )
-                        }
-                    },
-                    {
-                        content: e => e.type
-                    },
-                    {
-                        content: e => e.size
-                    }
-                ]
-            }}
-            cardsPerRow={[
-                { cards: 1 },
-                { minWidth: 500, cards: 1 }
+        <Table
+            columnDefinitions={[
+                {
+                    id: 'owner',
+                    header: 'Owner',
+                    cell: item => item.oracle_owner || item.mssql_schema || '',
+                },
+                {
+                    id: 'table',
+                    header: 'Table',
+                    cell: item => item.table,
+                },
+                {
+                    id: 'columns',
+                    header: 'Columns',
+                    cell: item => item.schema.length,
+                },
             ]}
-            items={tables[currentPageIndex - 1]}
-            loadingText="Loading Schema"
-            visibleSections={["description", "table", "size"]}
+            items={tables}
+            selectedItems={selectedItems}
+            selectionType="multi"
+            onSelectionChange={({ detail }) => setSelectedItems(detail.selectedItems)}
             header={
                 <Header
                     counter={
                         selectedItems.length
-                            ? "(" + selectedItems.length + "/" + tables.length + ")"
-                            : "(" + tables.length + ")"
+                            ? `(${selectedItems.length}/${tables.length})`
+                            : `(${tables.length})`
                     }
                     actions={
-                        <SpaceBetween direction="vertical" size="xs">
-                            {gettingSchemaFailed
-                                ?
+                        <SpaceBetween direction="horizontal" size="xs">
+                            {gettingSchema ? (
+                                <Button variant="primary">
+                                    <Spinner />
+                                </Button>
+                            ) : (
+                                <Button
+                                    disabled={!databaseConnected}
+                                    onClick={getDatabaseSchema}
+                                    variant="primary"
+                                >
+                                    Fetch Tables
+                                </Button>
+                            )}
+                            {gettingSchemaFailed && (
                                 <StatusIndicator type="error">
                                     Failed to Fetch Tables
                                 </StatusIndicator>
-                                :
-                                <></>
-                            }
-
-                            <SpaceBetween direction="horizontal" size="xs">
-                                {gettingSchema ? (
-                                    <Button variant="primary">
-                                        <Spinner />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        disabled={!databaseConnected}
-                                        onClick={getDatabaseSchema}
-                                        variant="primary"
-                                    >
-                                        Fetch Tables
-                                    </Button>
-                                )}
-                            </SpaceBetween>
+                            )}
                         </SpaceBetween>
                     }
-
                 >
                     Table Details
                 </Header>
             }
-            pagination={
-                <Pagination
-                    onChange={({ detail }) =>
-                        setCurrentPageIndex(detail.currentPageIndex)
-                    }
-                    currentPageIndex={currentPageIndex}
-                    pagesCount={pageCount} />
-            }
-
-
+            pagination={null}
         />
-
-
     );
 }

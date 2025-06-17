@@ -681,6 +681,33 @@ export class AppStack extends cdk.Stack {
             }
         );
 
+        const listSchemasLambda = new lambdaPython.PythonFunction(
+            this,
+            "ListSchemasFn",
+            {
+                role: databaseSchemaRole,
+                vpc: vpc,
+                securityGroups: [rdsSecurityGroup],
+                vpcSubnets: {
+                    subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                },
+                allowPublicSubnet: true,
+                runtime: cdk.aws_lambda.Runtime.PYTHON_3_9,
+                handler: "lambda_handler",
+                index: "main.py",
+                entry: "../api/archive/source/list-schemas",
+                timeout: cdk.Duration.seconds(30),
+                environment: {},
+            }
+        );
+
+        new ApiGatewayV2LambdaConstruct(this, "ListSchemasApiGateway", {
+            lambdaFn: listSchemasLambda,
+            routePath: "/api/archive/source/list-schemas",
+            methods: [apigwv2.HttpMethod.POST],
+            api: api.apiGatewayV2,
+        });
+
         new ApiGatewayV2LambdaConstruct(this, "DatabaseSchema" + "ApiGateway", {
             lambdaFn: this.databaseSchemaLambda,
             routePath: "/api/archive/source/get-schema",

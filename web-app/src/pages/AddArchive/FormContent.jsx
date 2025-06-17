@@ -80,6 +80,8 @@ export function FormContent({
     const [databaseEngine, setDatabaseEngine] = useState();
     const [databaseConnected, setDatabaseConnected] = useState(false);
     const [getTables, setGetTables] = useState(false);
+    const [schemaOptions, setSchemaOptions] = useState([]);
+    const [selectedSchemas, setSelectedSchemas] = useState([]);
 
     return (
         <BaseFormContent
@@ -100,6 +102,10 @@ export function FormContent({
                         setDatabaseConnected={setDatabaseConnected}
                         setFlashbarItems={setFlashbarItems}
                         setEnableFlashbar={setEnableFlashbar}
+                        schemaOptions={schemaOptions}
+                        setSchemaOptions={setSchemaOptions}
+                        selectedSchemas={selectedSchemas}
+                        setSelectedSchemas={setSelectedSchemas}
                     />
                     <TableDetailsPanel
                         databaseConnectionState={databaseConnectionState}
@@ -107,6 +113,7 @@ export function FormContent({
                         databaseConnected={databaseConnected}
                         setDatabaseConnected={setDatabaseConnected}
                         setGetTables={setGetTables}
+                        selectedSchemas={selectedSchemas}
                     />
                 </SpaceBetween>
             }
