@@ -1,4 +1,4 @@
-""" 
+"""
 Copyright 2023 Amazon.com, Inc. and its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License").
@@ -19,15 +19,15 @@ import logging
 import os
 import traceback
 
-from decimal import Decimal
 
 # region Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 logger = logging.getLogger()
 
 if logger.hasHandlers():
-    # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
-    # `.basicConfig` does not execute. Thus we set the level directly.
+    # The Lambda environment pre-configures a handler logging to stderr.
+    # If a handler is already configured, `.basicConfig` does not execute,
+    # so we set the level directly.
     logger.setLevel(LOG_LEVEL)
 else:
     logging.basicConfig(level=LOG_LEVEL)
@@ -35,6 +35,7 @@ else:
 
 client = boto3.client('athena')
 ssm = boto3.client('ssm')
+
 
 def mask_sensitive_data(event):
     # remove sensitive data from request object before logging
@@ -95,10 +96,16 @@ def lambda_handler(event, context):
                 QueryExecutionId=response["QueryExecutionId"]
             )
 
-            if query_state_response["QueryExecution"]["Status"]["State"] == "FAILED":
+            if (
+                query_state_response["QueryExecution"]["Status"]["State"]
+                == "FAILED"
+            ):
                 return build_response(500, "Server Error")
 
-            if query_state_response["QueryExecution"]["Status"]["State"] == "SUCCEEDED":
+            if (
+                query_state_response["QueryExecution"]["Status"]["State"]
+                == "SUCCEEDED"
+            ):
                 query_state_running = False
                 break
 
@@ -109,7 +116,7 @@ def lambda_handler(event, context):
 
         return build_response(200, json.dumps(query_response))
 
-    except Exception as ex:
+    except Exception:
         logger.error(traceback.format_exc())
         return build_response(500, "Server Error")
 
