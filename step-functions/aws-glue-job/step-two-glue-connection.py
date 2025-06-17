@@ -103,7 +103,7 @@ def lambda_handler(event, context):
                             'USERNAME': dynamodb_response["Item"]["username"],
                             'JDBC_ENFORCE_SSL': 'false',
                             'PASSWORD': secret_value["SecretString"],
-                            'JDBC_CONNECTION_URL': f'jdbc:oracle://{dynamodb_response["Item"]["hostname"]}:{dynamodb_response["Item"]["port"]}/{dynamodb_response["Item"]["database"]}'
+                            'JDBC_CONNECTION_URL': f'jdbc:oracle:thin:@//{dynamodb_response["Item"]["hostname"]}:{dynamodb_response["Item"]["port"]}/{dynamodb_response["Item"]["database"]}'
                         },
                         'PhysicalConnectionRequirements': {
                             'SubnetId': SUBNET_ID,
