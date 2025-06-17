@@ -86,22 +86,20 @@ def lambda_handler(event, context):
             return build_response(500, "Server Error")
 
     elif database_engine == "oracle":
-        oracle_owner = body["oracle_owner"]
-        oracle_owner_list = oracle_owner.split(",")
-        for owner in oracle_owner_list:
-            try:
-                oracle_connection = oracle.Connection(hostname,
-                                                    port,
-                                                    username,
-                                                    password,
-                                                    database,
-                                                    owner)
-                connected = oracle_connection.testConnection()
-                response = {"connected": connected}
-                return build_response(200, json.dumps(response))
-            except Exception as ex:
-                logger.error(traceback.format_exc())
-                return build_response(500, "Server Error")
+        try:
+            oracle_connection = oracle.Connection(
+                hostname,
+                port,
+                username,
+                password,
+                database,
+            )
+            connected = oracle_connection.testConnection()
+            response = {"connected": connected}
+            return build_response(200, json.dumps(response))
+        except Exception as ex:
+            logger.error(traceback.format_exc())
+            return build_response(500, "Server Error")
             
     elif database_engine == "mssql":
         print("mssql")

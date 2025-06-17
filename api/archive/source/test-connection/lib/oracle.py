@@ -22,29 +22,22 @@ def create_dsn(hostname: str, port: str, service: str) -> str:
 
 
 class Connection:
-    def __init__(self, hostname, port, username, password, database, oracle_owner):
+    def __init__(self, hostname, port, username, password, database):
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
         self.database = database
-        self.oracle_owner = oracle_owner
 
     def testConnection(self):
-
         try:
-
             dsn = create_dsn(self.hostname, self.port, self.database)
             with oracledb.connect(user=self.username, password=self.password, dsn=dsn) as connection:
                 with connection.cursor() as cursor:
-                    sql = """SELECT owner, table_name  FROM all_tables WHERE OWNER = 'DMS_SAMPLE'"""
-                    for r in cursor.execute(sql):
-                        print(r)
-
-            # cursor.close()
+                    cursor.execute("SELECT 1 FROM dual")
+                    cursor.fetchall()
 
             return True
 
-        except Exception as e:
-            print(e)
+        except Exception:
             return False

@@ -25,6 +25,7 @@ import {
     Spinner,
     Button,
     StatusIndicator,
+    Multiselect,
 } from "@cloudscape-design/components";
 import { API } from "aws-amplify";
 
@@ -49,6 +50,10 @@ export default function DatabaseSettingsPanel({
     databaseEngine,
     databaseConnected,
     setDatabaseConnected,
+    schemaOptions,
+    setSchemaOptions,
+    selectedSchemas,
+    setSelectedSchemas,
     updateDirty = noop,
     readOnlyWithErrors = false,
 }) {
@@ -58,6 +63,16 @@ export default function DatabaseSettingsPanel({
     // Database test connection
     const [databaseTestExecuted, setDatabaseTestExecuted] = useState(false);
     const [databaseConnecting, setDatabaseConnecting] = useState(false);
+
+    useEffect(() => {
+        setDatabaseConnectionState((current) => {
+            const body = {
+                ...current.body,
+                oracle_owner: selectedSchemas.map((s) => s.value).join(','),
+            };
+            return { ...current, body };
+        });
+    }, [selectedSchemas]);
 
     useEffect(() => {
         const isDirty =
@@ -84,10 +99,6 @@ export default function DatabaseSettingsPanel({
         const myInit = {
             body: {
                 database_engine: databaseEngine,
-                oracle_owner:
-                    archivePanelData.oracleOwner === undefined
-                        ? ""
-                        : archivePanelData.oracleOwner,
                 hostname:
                     archivePanelData.databaseHostname === undefined
                         ? ""
@@ -126,6 +137,16 @@ export default function DatabaseSettingsPanel({
             myInit
         );
         setDatabaseConnected(response["connected"]);
+        if (response["connected"] && databaseEngine === "oracle") {
+            const schemaResp = await API.post(
+                "api",
+                "api/archive/source/list-schemas",
+                myInit
+            );
+            setSchemaOptions(
+                schemaResp.schemas.map((s) => ({ label: s, value: s }))
+            );
+        }
         setDatabaseConnecting(false);
         setDatabaseTestExecuted(true);
     };
@@ -234,34 +255,21 @@ export default function DatabaseSettingsPanel({
                     </SpaceBetween>
                 </FormField>
 
-                {databaseEngine === "oracle"
-
-                    ?
+                {databaseEngine === "oracle" && databaseConnected ? (
                     <FormField
                         stretch={true}
-                        label={<span id="certificate-expiry-label">Oracle Owner</span>}
+                        label={<span id="certificate-expiry-label">Oracle Schemas</span>}
                     >
-                        <SpaceBetween size="s" direction="horizontal">
-                            <FormField
-                                stretch={true}
-                                description="Enter the username for the Oracle owner."
-                            >
-                                <Input
-                                    autoComplete={false}
-                                    value={archivePanelData.oracleOwner}
-                                    ariaRequired={true}
-                                    placeholder=""
-                                    onChange={({ detail: { value } }) =>
-                                        onChange("oracleOwner", value)
-                                    }
-                                />
-                            </FormField>
-                        </SpaceBetween>
+                        <Multiselect
+                            selectedOptions={selectedSchemas}
+                            options={schemaOptions}
+                            placeholder="Select schemas"
+                            onChange={({ detail }) => setSelectedSchemas(detail.selectedOptions)}
+                        />
                     </FormField>
-                    :
+                ) : (
                     <></>
-
-                }
+                )}
 
                 <FormField
                     stretch={true}
