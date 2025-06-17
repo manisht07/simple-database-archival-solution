@@ -1,4 +1,4 @@
-""" 
+"""
 Copyright 2023 Amazon.com, Inc. and its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License").
@@ -27,8 +27,9 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 logger = logging.getLogger()
 
 if logger.hasHandlers():
-    # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
-    # `.basicConfig` does not execute. Thus we set the level directly.
+    # The Lambda environment pre-configures a handler logging to stderr.
+    # If a handler is already configured, `.basicConfig` does not execute,
+    # so we set the level directly.
     logger.setLevel(LOG_LEVEL)
 else:
     logging.basicConfig(level=LOG_LEVEL)
@@ -90,7 +91,7 @@ def lambda_handler(event, context):
     table = dynamodb.Table(parameter['Parameter']['Value'])
 
     try:
-            
+
         if delete_data is True:
             for folder_path in folder_paths:
 
@@ -100,7 +101,8 @@ def lambda_handler(event, context):
                         'Rules': [
                             {
                                 'Expiration': {
-                                    'Date': datetime.strptime(expiration, '%Y-%m-%d')
+                                    'Date': datetime.strptime(
+                                        expiration, '%Y-%m-%d')
                                 },
                                 'ID': folder_path,
                                 'Filter': {
@@ -127,7 +129,8 @@ def lambda_handler(event, context):
                             'Rules': [
                                 {
                                     'Expiration': {
-                                        'Date': datetime.strptime(expiration, '%Y-%m-%d')
+                                        'Date': datetime.strptime(
+                                            expiration, '%Y-%m-%d')
                                     },
                                     'ID': folder_path,
                                     'Filter': {

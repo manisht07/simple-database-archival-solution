@@ -1,4 +1,4 @@
-""" 
+"""
 Copyright 2023 Amazon.com, Inc. and its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License").
@@ -30,8 +30,9 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 logger = logging.getLogger()
 
 if logger.hasHandlers():
-    # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
-    # `.basicConfig` does not execute. Thus we set the level directly.
+    # The Lambda environment pre-configures a handler logging to stderr.
+    # If a handler is already configured, `.basicConfig` does not execute,
+    # so we set the level directly.
     logger.setLevel(LOG_LEVEL)
 else:
     logging.basicConfig(level=LOG_LEVEL)
@@ -83,7 +84,7 @@ def lambda_handler(event, context):
         parameter = ssm.get_parameter(
             Name='/archive/dynamodb-table', WithDecryption=True)
         table = dynamodb.Table(parameter['Parameter']['Value'])
-        
+
         bucket = s3.Bucket(bucket_name)
 
         try:
@@ -95,8 +96,8 @@ def lambda_handler(event, context):
                         'Status': legal_hold
                     },
                 )
-            
-            if legal_hold == 'ON':                
+
+            if legal_hold == 'ON':
                 table.update_item(
                     Key={'id': archive_id},
                     UpdateExpression="SET legal_hold= :s",
@@ -110,13 +111,13 @@ def lambda_handler(event, context):
                     ExpressionAttributeValues={':s': False},
                     ReturnValues="UPDATED_NEW"
                 )
-        except Exception as ex:
+        except Exception:
             logger.error(traceback.format_exc())
             return build_response(500, "Server Error")
 
         response = {"legal_hold": legal_hold}
         return build_response(200, json.dumps(response))
-    except Exception as ex:
+    except Exception:
         logger.error(traceback.format_exc())
         return build_response(500, "Server Error")
 
