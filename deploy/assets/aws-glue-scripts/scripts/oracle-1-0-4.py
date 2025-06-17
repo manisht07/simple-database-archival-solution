@@ -70,18 +70,18 @@ OracleSQLtable_node1 = directJDBCSource(
     transformation_ctx="OracleSQLtable_node1",
 )
 
-# tuples = list(map(tuple, json.loads(args["MAPPINGS"])))
+tuples = list(map(tuple, json.loads(args["MAPPINGS"])))
 
-# # Script generated for node ApplyMapping
-# ApplyMapping_node2 = ApplyMapping.apply(
-#     frame=Oracletable_node1,
-#     mappings=tuples,
-#     transformation_ctx="ApplyMapping_node2",
-# )
+# Script generated for node ApplyMapping
+ApplyMapping_node2 = ApplyMapping.apply(
+    frame=OracleSQLtable_node1,
+    mappings=tuples,
+    transformation_ctx="ApplyMapping_node2",
+)
 
 # Script generated for node S3 bucket
 S3bucket_node3 = glueContext.write_dynamic_frame.from_options(
-    frame=OracleSQLtable_node1,
+    frame=ApplyMapping_node2,
     connection_type="s3",
     format="glueparquet",
         connection_options={

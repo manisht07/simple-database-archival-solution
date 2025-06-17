@@ -15,16 +15,30 @@ permissions and limitations under the License.
 
 import oracledb
 
-def convert_schema(type):
-    
-    if "CHAR" in type:
+
+def create_dsn(hostname: str, port: str, service: str) -> str:
+    """Create an Oracle DSN that works across versions using service name."""
+    return oracledb.makedsn(hostname, port, service_name=service)
+
+def convert_schema(column_type: str) -> str:
+    """Map Oracle data types to Glue types."""
+
+    t = column_type.upper()
+
+    if "CHAR" in t or "CLOB" in t or "LONG" in t or "VARCHAR" in t:
         return "string"
-    elif "INTEGER" in type:
+    elif "RAW" in t or "BLOB" in t or "BFILE" in t:
+        return "binary"
+    elif "FLOAT" in t:
+        return "float"
+    elif "INT" in t or "INTEGER" in t:
         return "int"
-    elif "NUMBER" in type:
+    elif "NUMBER" in t or "DEC" in t:
         return "decimal"
-    elif "DATE" in type:
+    elif "TIMESTAMP" in t or "DATE" in t:
         return "timestamp"
+    else:
+        return "string"
 
 
 class Connection:
@@ -43,7 +57,8 @@ class Connection:
         try:
 
             oracle_tables = []
-            with oracledb.connect(user=self.username, password=self.password, dsn=f'{self.hostname}:{self.port}/{self.database}') as connection:
+            dsn = create_dsn(self.hostname, self.port, self.database)
+            with oracledb.connect(user=self.username, password=self.password, dsn=dsn) as connection:
                 with connection.cursor() as cursor:
                     sql = f"""SELECT owner, table_name  FROM all_tables WHERE OWNER = '{self.oracle_owner}'"""
                     for r in cursor.execute(sql):
@@ -52,7 +67,7 @@ class Connection:
             for table in oracle_tables:
                 row_list = []
                 cnn = oracledb.connect(user=self.username, password=self.password,
-                                    dsn=f'{self.hostname}:{self.port}/{self.database}')
+                                    dsn=dsn)
                 cursor = cnn.cursor()
                 
                 cursor.execute("SELECT COLUMN_NAME, DATA_TYPE FROM ALL_TAB_COLUMNS WHERE TABLE_NAME=\'" + table + "\'and OWNER=\'" + self.oracle_owner + "\'")
@@ -70,5 +85,5 @@ class Connection:
                 print(table_list)
             return table_list
 
-        except Exception as e:
+        except Exception:
             return False
