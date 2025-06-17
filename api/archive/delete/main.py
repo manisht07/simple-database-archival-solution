@@ -1,4 +1,4 @@
-""" 
+"""
 Copyright 2023 Amazon.com, Inc. and its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License").
@@ -18,8 +18,6 @@ import json
 import logging
 import os
 import traceback
-import datetime
-import uuid
 
 # region Logging
 
@@ -27,8 +25,9 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 logger = logging.getLogger()
 
 if logger.hasHandlers():
-    # The Lambda environment pre-configures a handler logging to stderr. If a handler is already configured,
-    # `.basicConfig` does not execute. Thus we set the level directly.
+    # The Lambda environment pre-configures a handler logging to stderr.
+    # If a handler is already configured, `.basicConfig` does not execute,
+    # so we set the level directly.
     logger.setLevel(LOG_LEVEL)
 else:
     logging.basicConfig(level=LOG_LEVEL)
@@ -36,6 +35,7 @@ else:
 # endregion
 
 ssm = boto3.client('ssm')
+
 
 def mask_sensitive_data(event):
     # remove sensitive data from request object before logging
@@ -67,26 +67,25 @@ def lambda_handler(event, context):
     logger.info(mask_sensitive_data(event))
 
     try:
-        
-        parameter = ssm.get_parameter(Name='/archive/dynamodb-table', WithDecryption=True)
+
+        parameter = ssm.get_parameter(
+            Name='/archive/dynamodb-table', WithDecryption=True)
         body = json.loads(
             event["body"]) if "body" in event else json.loads(event)
         # database_engine = body["database_engine"]
         archive_id = body["archive_id"]
-        
+
         dynamodb_client = boto3.resource('dynamodb')
-        
+
         table = dynamodb_client.Table(parameter['Parameter']['Value'])
         response = table.delete_item(
             Key={
                 'id': archive_id
             })
-                
-
 
         # response = {"text": "Example response from authenticated api"}
         return build_response(200, json.dumps(response))
-    except Exception as ex:
+    except Exception:
         logger.error(traceback.format_exc())
         return build_response(500, "Server Error")
 
