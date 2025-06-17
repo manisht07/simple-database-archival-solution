@@ -1,4 +1,4 @@
-""" 
+"""
 Copyright 2023 Amazon.com, Inc. and its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License").
@@ -98,7 +98,7 @@ def lambda_handler(event, context):
             SecretString=password,
             ForceOverwriteReplicaSecret=True
         )
-        
+
         table = dynamodb_client.Table(parameter['Parameter']['Value'])
         dt = datetime.datetime.now(pytz.UTC)
 
@@ -113,7 +113,8 @@ def lambda_handler(event, context):
                 "username": username,
                 "secret_arn": create_secret_response["ARN"],
                 "database": database,
-                "oracle_owner": body["oracle_owner"] if 'oracle_owner' in body else "",
+                "oracle_owner": (body["oracle_owner"]
+                                 if 'oracle_owner' in body else ""),
                 "table_details": table_details,
                 "time_submitted": str(dt),
                 "archive_status": "Archive Queue",
@@ -139,7 +140,7 @@ def lambda_handler(event, context):
 
         response = {"text": "Example response from authenticated api"}
         return build_response(200, json.dumps(response))
-    except Exception as ex:
+    except Exception:
         logger.error(traceback.format_exc())
         return build_response(500, "Server Error")
 
