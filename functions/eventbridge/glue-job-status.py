@@ -27,7 +27,17 @@ ARCHIVE_TABLE = os.environ["ARCHIVE_TABLE"]
 VALIDATION_STATE_MACHINE = os.environ["VALIDATION_STATE_MACHINE"]
 
 
-def update_job_state(archive_id, job_run_id, job_name, job_message, job_state, job_timestamp, table_name, started_on, completed_on):
+def update_job_state(
+    archive_id,
+    job_run_id,
+    job_name,
+    job_message,
+    job_state,
+    job_timestamp,
+    table_name,
+    started_on,
+    completed_on,
+):
     """
     Updates the state of a job run in a DynamoDB table.
 
@@ -49,7 +59,17 @@ def update_job_state(archive_id, job_run_id, job_name, job_message, job_state, j
     botocore.exceptions.ClientError: If there is an error with the AWS client.
 
     Example Usage:
-    >>> update_job_state("abc123", "run1", "job1", "job completed successfully", "completed", datetime.now(), "my_table", datetime.now(), datetime.now())
+    >>> update_job_state(
+    ...     "abc123",
+    ...     "run1",
+    ...     "job1",
+    ...     "job completed successfully",
+    ...     "completed",
+    ...     datetime.now(),
+    ...     "my_table",
+    ...     datetime.now(),
+    ...     datetime.now(),
+    ... )
     """
 
     table = dynamodb_client.Table(table_name)
@@ -78,23 +98,26 @@ def update_job_state(archive_id, job_run_id, job_name, job_message, job_state, j
 
 def lambda_handler(event, context):
     """
-    Lambda function that handles AWS Glue job state changes and triggers a Step Functions state machine
-    to run validation.
+    Lambda function that handles AWS Glue job state changes and triggers a
+    Step Functions state machine to run validation.
 
-    The function receives an event dictionary with information about the Glue job run, such as the job name, job run ID,
-    and state. It extracts the archive ID from the job name and retrieves the corresponding archive record from a
-    DynamoDB table. If the job run succeeded, it extracts the table schema from the archive record and triggers a Step
-    Functions state machine to validate the table schema. If the job run failed, it updates the archive status in the
-    DynamoDB table to 'Failed'. The function returns the input event dictionary.
+    The function receives an event dictionary with information about the Glue
+    job run, such as the job name and job run ID. It retrieves the
+    corresponding archive record from a DynamoDB table. When the job succeeds,
+    the table schema is validated by a Step Functions state machine. If the job
+    fails, the archive status is updated to 'Failed'. The function returns the
+    input event dictionary.
 
-    :param event: A dictionary with information about the Glue job run, including the job name, job run ID, and state.
+    :param event: A dictionary with information about the Glue job run,
+        including the job name, job run ID, and state.
     :type event: dict
-    :param context: A dictionary with information about the Lambda execution environment.
+    :param context: A dictionary with information about the Lambda execution
+        environment.
     :type context: dict
     :return: The input event dictionary.
     :rtype: dict
     """
-    
+
     if ("jobName" in event["detail"]):
         x = event["detail"]["jobName"].split("-")
         archive_id = x[0] + "-" + x[1] + "-" + x[2] + "-" + x[3] + "-" + x[4]
@@ -120,7 +143,7 @@ def lambda_handler(event, context):
             response["JobRun"]["StartedOn"],
             response["JobRun"]["CompletedOn"]
         )
-        
+
         if (event["detail"]["state"] == 'FAILED'):
             table.update_item(
                 Key={'id': archive_id},
@@ -157,16 +180,22 @@ def lambda_handler(event, context):
                     "schema": []
                 }
             }
-            
+
             dynamodb_updated_response = table.get_item(Key={"id": archive_id})
             for table in dynamodb_updated_response["Item"]["table_details"]:
                 if (table["table"] == x[6]):
                     return_table["table"]["archive_id"] = archive_id
                     return_table["table"]["schema"] = table["schema"]
                     return_table["table"]["table"] = table["table"]
-                    return_table["table"]["database"] = dynamodb_updated_response["Item"]["database"]
-                    return_table["table"]["database_engine"] = dynamodb_updated_response["Item"]["database_engine"]
-                    return_table["table"]["oracle_owner"] = dynamodb_updated_response["Item"]["oracle_owner"]
+                    return_table["table"]["database"] = (
+                        dynamodb_updated_response["Item"]["database"]
+                    )
+                    return_table["table"]["database_engine"] = (
+                        dynamodb_updated_response["Item"]["database_engine"]
+                    )
+                    return_table["table"]["oracle_owner"] = (
+                        dynamodb_updated_response["Item"]["oracle_owner"]
+                    )
 
             step_functions_client.start_execution(
                 stateMachineArn=VALIDATION_STATE_MACHINE,
