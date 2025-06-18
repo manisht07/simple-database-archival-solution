@@ -83,6 +83,7 @@ export class S3BucketConstruct extends Construct {
       removalPolicy: props.removalPolicy,
       blockPublicAccess: props.blockPublicAccess,
       encryption: props.encryption,
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
       serverAccessLogsPrefix: props.serverAccessLogsPrefix,
       versioned: props.versioned,
       autoDeleteObjects: props.deleteObjects,

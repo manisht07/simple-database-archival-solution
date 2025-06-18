@@ -67,6 +67,7 @@ export class CloudFrontS3WebSiteConstruct extends Construct {
 
     const siteBucket = new cdk.aws_s3.Bucket(this, "WebApp", {
       encryption: cdk.aws_s3.BucketEncryption.S3_MANAGED,
+      objectOwnership: cdk.aws_s3.ObjectOwnership.OBJECT_WRITER,
       autoDeleteObjects: true,
       blockPublicAccess: cdk.aws_s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -75,6 +76,7 @@ export class CloudFrontS3WebSiteConstruct extends Construct {
         "WebAppServerAccessLogs",
         {
           encryption: cdk.aws_s3.BucketEncryption.S3_MANAGED,
+          objectOwnership: cdk.aws_s3.ObjectOwnership.OBJECT_WRITER,
           autoDeleteObjects: true,
           blockPublicAccess: cdk.aws_s3.BlockPublicAccess.BLOCK_ALL,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
