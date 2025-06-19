@@ -66,11 +66,12 @@ export default function DatabaseSettingsPanel({
 
     useEffect(() => {
         setDatabaseConnectionState((current) => {
+            const safeState = current ?? { body: {} };
             const body = {
-                ...current.body,
+                ...safeState.body,
                 oracle_owner: selectedSchemas.map((s) => s.value).join(','),
             };
-            return { ...current, body };
+            return { ...safeState, body };
         });
     }, [selectedSchemas]);
 

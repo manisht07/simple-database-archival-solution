@@ -76,7 +76,7 @@ export function FormContent({
     setEnableFlashbar
 }) {
 
-    const [databaseConnectionState, setDatabaseConnectionState] = useState();
+    const [databaseConnectionState, setDatabaseConnectionState] = useState({ body: {} });
     const [databaseEngine, setDatabaseEngine] = useState();
     const [databaseConnected, setDatabaseConnected] = useState(false);
     const [getTables, setGetTables] = useState(false);
