@@ -37,8 +37,9 @@ export default function TableDetailsPanel({
 
     useEffect(() => {
         setDatabaseConnectionState((current) => {
-            const body = { ...current.body, tables: selectedItems };
-            return { ...current, body };
+            const safeState = current ?? { body: {} };
+            const body = { ...safeState.body, tables: selectedItems };
+            return { ...safeState, body };
         });
     }, [selectedItems]);
     const [gettingSchema, setGettingSchema] = useState(false);
@@ -48,10 +49,11 @@ export default function TableDetailsPanel({
 
     const getDatabaseSchema = async (e) => {
         setGettingSchema(true);
+        const safeState = databaseConnectionState ?? { body: {} };
         const request = {
-            ...databaseConnectionState,
+            ...safeState,
             body: {
-                ...databaseConnectionState.body,
+                ...safeState.body,
                 oracle_owner: selectedSchemas.map((s) => s.value).join(','),
             },
         };
@@ -73,9 +75,9 @@ export default function TableDetailsPanel({
 
     const updateNestedProps = (data) => {
         setDatabaseConnectionState(current => {
-            const body = { ...current.body };
-            body.tables = data;
-            return { ...current, body };
+            const safeState = current ?? { body: {} };
+            const body = { ...safeState.body, tables: data };
+            return { ...safeState, body };
         });
     };
 
