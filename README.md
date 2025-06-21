@@ -95,7 +95,13 @@ On mac/linux, edit /etc/hosts and add the following line:
 
 2. Set the api gateway url for the shared development environment
 
-After deployment of the shared development environment, edit the `.env.development` file and update the `REACT_APP_API_URL` environment variable to the ApiGatewayUrl.  This only needs to be done once.  
+After deployment of the shared development environment, edit the `.env.development` file and update the `REACT_APP_API_URL` environment variable to the ApiGatewayUrl.  This only needs to be done once.
+
+3. Install the web application dependencies before running lint or tests
+
+```bash
+cd web-app && npm install
+```
 
 ## Using SDAS
 
