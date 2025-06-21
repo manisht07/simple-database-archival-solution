@@ -62,7 +62,6 @@ export default function TableDetailsPanel({
                 setGettingSchemaFailed(false)
                 setTables(response.tables);
                 setSelectedItems(response.tables);
-                setPageCount(Math.ceil(response.tables.length / 10));
                 setGettingSchema(false);
                 updateNestedProps(response.tables)
                 setGetTables(true)
