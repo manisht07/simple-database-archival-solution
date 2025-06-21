@@ -34,6 +34,8 @@ export default function TableDetailsPanel({
 
     const [tables, setTables] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
+    const selectAll = () => setSelectedItems(tables);
+    const clearAll = () => setSelectedItems([]);
 
     useEffect(() => {
         setDatabaseConnectionState((current) => {
@@ -127,6 +129,8 @@ export default function TableDetailsPanel({
                                     Fetch Tables
                                 </Button>
                             )}
+                            <Button onClick={selectAll} disabled={tables.length === 0}>Select All</Button>
+                            <Button onClick={clearAll} disabled={selectedItems.length === 0}>Clear</Button>
                             {gettingSchemaFailed && (
                                 <StatusIndicator type="error">
                                     Failed to Fetch Tables

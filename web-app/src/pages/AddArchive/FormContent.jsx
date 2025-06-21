@@ -15,22 +15,36 @@
 
 import { useState } from 'react';
 import { useHistory } from "react-router-dom";
-import { Button, Form, SpaceBetween, Spinner } from '@cloudscape-design/components';
+import {
+    Button,
+    Form,
+    SpaceBetween,
+    Spinner,
+    Tabs,
+} from '@cloudscape-design/components';
 import TableDetailsPanel from './TableDetailsPanel';
 import DatabaseTypePanel from './DatabaseTypePanel';
 import DatabaseSettingsPanel from './DatabaseSettingsPanel';
+import S3TargetPanel from './S3TargetPanel';
 import { API } from "aws-amplify";
 
 
 
-function BaseFormContent({ databaseConnectionState, databaseConnected, content, onCancelClick, getTables, errorText = null }) {
+function BaseFormContent({ databaseConnectionState, targetState, databaseConnected, content, onCancelClick, getTables, errorText = null }) {
 
     const history = useHistory();
     const [creatingArchive, setCreatingArchive] = useState(false);
 
     const createArchive = async (e) => {
         setCreatingArchive(true);
-        const response = await API.post("api", "api/archive/create", databaseConnectionState);
+        const request = {
+            ...databaseConnectionState,
+            body: {
+                ...databaseConnectionState.body,
+                ...targetState.body,
+            },
+        };
+        await API.post("api", "api/archive/create", request);
         setCreatingArchive(false);
         history.push("/");
     };
@@ -77,7 +91,9 @@ export function FormContent({
 }) {
 
     const [databaseConnectionState, setDatabaseConnectionState] = useState({ body: {} });
+    const [targetState, setTargetState] = useState({ body: {} });
     const [databaseEngine, setDatabaseEngine] = useState();
+    const [activeTab, setActiveTab] = useState('source');
     const [databaseConnected, setDatabaseConnected] = useState(false);
     const [getTables, setGetTables] = useState(false);
     const [schemaOptions, setSchemaOptions] = useState([]);
@@ -86,36 +102,62 @@ export function FormContent({
     return (
         <BaseFormContent
             databaseConnectionState={databaseConnectionState}
+            targetState={targetState}
             setDatabaseConnectionState={setDatabaseConnectionState}
             databaseConnected={databaseConnected}
             setDatabaseConnected={setDatabaseConnected}
             getTables={getTables}
             content={
-                <SpaceBetween size="l">
-                    <DatabaseTypePanel setDatabaseEngine={setDatabaseEngine} databaseEngine={databaseEngine} />
-                    <DatabaseSettingsPanel
-                        setDatabaseEngine={setDatabaseEngine}
-                        databaseEngine={databaseEngine}
-                        databaseConnectionState={databaseConnectionState}
-                        setDatabaseConnectionState={setDatabaseConnectionState}
-                        databaseConnected={databaseConnected}
-                        setDatabaseConnected={setDatabaseConnected}
-                        setFlashbarItems={setFlashbarItems}
-                        setEnableFlashbar={setEnableFlashbar}
-                        schemaOptions={schemaOptions}
-                        setSchemaOptions={setSchemaOptions}
-                        selectedSchemas={selectedSchemas}
-                        setSelectedSchemas={setSelectedSchemas}
-                    />
-                    <TableDetailsPanel
-                        databaseConnectionState={databaseConnectionState}
-                        setDatabaseConnectionState={setDatabaseConnectionState}
-                        databaseConnected={databaseConnected}
-                        setDatabaseConnected={setDatabaseConnected}
-                        setGetTables={setGetTables}
-                        selectedSchemas={selectedSchemas}
-                    />
-                </SpaceBetween>
+                <Tabs
+                    onChange={({ detail }) => setActiveTab(detail.activeTabId)}
+                    activeTabId={activeTab}
+                    tabs={[
+                        {
+                            label: 'Source',
+                            id: 'source',
+                            content: (
+                                <SpaceBetween size="l">
+                                    <DatabaseTypePanel setDatabaseEngine={setDatabaseEngine} databaseEngine={databaseEngine} />
+                                    <DatabaseSettingsPanel
+                                        setDatabaseEngine={setDatabaseEngine}
+                                        databaseEngine={databaseEngine}
+                                        databaseConnectionState={databaseConnectionState}
+                                        setDatabaseConnectionState={setDatabaseConnectionState}
+                                        databaseConnected={databaseConnected}
+                                        setDatabaseConnected={setDatabaseConnected}
+                                        setFlashbarItems={setFlashbarItems}
+                                        setEnableFlashbar={setEnableFlashbar}
+                                        schemaOptions={schemaOptions}
+                                        setSchemaOptions={setSchemaOptions}
+                                        selectedSchemas={selectedSchemas}
+                                        setSelectedSchemas={setSelectedSchemas}
+                                    />
+                                </SpaceBetween>
+                            ),
+                        },
+                        {
+                            label: 'Tables',
+                            id: 'tables',
+                            content: (
+                                <TableDetailsPanel
+                                    databaseConnectionState={databaseConnectionState}
+                                    setDatabaseConnectionState={setDatabaseConnectionState}
+                                    databaseConnected={databaseConnected}
+                                    setDatabaseConnected={setDatabaseConnected}
+                                    setGetTables={setGetTables}
+                                    selectedSchemas={selectedSchemas}
+                                />
+                            ),
+                        },
+                        {
+                            label: 'Target',
+                            id: 'target',
+                            content: (
+                                <S3TargetPanel targetState={targetState} setTargetState={setTargetState} />
+                            ),
+                        },
+                    ]}
+                />
             }
         />
     );
