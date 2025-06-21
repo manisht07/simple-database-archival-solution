@@ -350,6 +350,19 @@ export function ValidationTable(
                             }
                             i18nStrings={i18nStrings}
                         />
+
+                        <CodeEditor
+                            ace={ace}
+                            editorContentHeight={70}
+                            language="sql"
+                            value={checkValidation(isSelected, "checksum_validation")}
+                            preferences={undefined}
+                            loading={aceLoading}
+                            onPreferencesChange={({ detail }) =>
+                                handleCodeEditorPreferencesChange(detail)
+                            }
+                            i18nStrings={i18nStrings}
+                        />
                     </SpaceBetween>
                 </ExpandableSection>
             </SpaceBetween>

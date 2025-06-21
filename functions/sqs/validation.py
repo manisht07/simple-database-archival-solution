@@ -33,6 +33,7 @@ def lambda_handler(event, context):
     
     for message in event["Records"]:
         message_body = json.loads(message["body"])
+        checksum_message = message_body.get("checksum_complete", False)
         
         dynamodb_response = table.get_item(Key={"id": message_body["archive_id"]})
         
@@ -46,6 +47,9 @@ def lambda_handler(event, context):
             ExpressionAttributeValues={':s': validation_completed_increment},
             ReturnValues="UPDATED_NEW"
         )
+        if checksum_message:
+            print("Checksum validation completed message received")
+
         if (validation_completed_increment == validation_count):
             table.update_item(
                 Key={'id': message_body["archive_id"]},

@@ -90,6 +90,7 @@ def lambda_handler(event, context):
             table["count_validation"] = {}
             table["string_validation"] = {}
             table["number_validation"] = {}
+            table["checksum_validation"] = {}
 
         archive_id = str(uuid.uuid4())
         create_secret_response = client.create_secret(

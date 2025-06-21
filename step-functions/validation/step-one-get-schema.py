@@ -138,4 +138,15 @@ def lambda_handler(event, context):
         if number_counter == 1:
             break
 
+    # Checksum Validation
+    update_validation_count(event["table"]["archive_id"])
+    return_event.append({
+        "table": event["table"]["table"],
+        "archive_id": event["table"]["archive_id"],
+        "database": event["table"]["database"],
+        "database_engine": event["table"]["database_engine"],
+        "oracle_owner": event["table"]["oracle_owner"],
+        "validation_type": "checksum_validation",
+    })
+
     return {"Payload": return_event}
