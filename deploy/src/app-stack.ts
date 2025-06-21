@@ -1439,6 +1439,31 @@ export class AppStack extends cdk.Stack {
             })
         );
 
+        const stepFunctionValidationChecksum = new lambdaPython.PythonFunction(
+            this,
+            "StepFunctionValidationChecksum",
+            {
+                runtime: cdk.aws_lambda.Runtime.PYTHON_3_9,
+                handler: "lambda_handler",
+                index: "checksum-validation.py",
+                entry: "../step-functions/validation",
+                timeout: cdk.Duration.minutes(5),
+                environment: {},
+            }
+        );
+
+        stepFunctionValidationChecksum.role?.attachInlinePolicy(
+            new iam.Policy(this, "StepFunctionValidationChecksumPolicy", {
+                statements: [
+                    ssmGetParameterPolicy,
+                    dynamoDbWritePolicy,
+                    dynamoDbReadOnlyPolicy,
+                    athenaPolicy,
+                    secretsmanagerGetSecretValue,
+                ],
+            })
+        );
+
         const validationDefinition = new cdk.aws_stepfunctions_tasks.LambdaInvoke(
             this,
             "Step One - Get Schema",
@@ -1490,6 +1515,20 @@ export class AppStack extends cdk.Stack {
                             "String Validation",
                             {
                                 lambdaFunction: stepFunctionValidationString,
+                                outputPath: "$.Payload",
+                            }
+                        )
+                    )
+                    .when(
+                        cdk.aws_stepfunctions.Condition.stringEquals(
+                            "$.validation_type",
+                            "checksum_validation"
+                        ),
+                        new cdk.aws_stepfunctions_tasks.LambdaInvoke(
+                            this,
+                            "Checksum Validation",
+                            {
+                                lambdaFunction: stepFunctionValidationChecksum,
                                 outputPath: "$.Payload",
                             }
                         )
@@ -1770,6 +1809,38 @@ export class AppStack extends cdk.Stack {
                     ssmGetParameterPolicy,
                     dynamoDbWritePolicy,
                     dynamoDbReadOnlyPolicy,
+                ],
+            })
+        );
+
+        const validateChecksum = new lambdaPython.PythonFunction(
+            this,
+            "ValidateChecksumFn",
+            {
+                runtime: cdk.aws_lambda.Runtime.PYTHON_3_9,
+                handler: "lambda_handler",
+                index: "main.py",
+                entry: "../api/archive/validate-checksum",
+                timeout: cdk.Duration.minutes(15),
+                environment: {},
+            }
+        );
+
+        new ApiGatewayV2LambdaConstruct(this, "ValidateChecksumApiGateway", {
+            lambdaFn: validateChecksum,
+            routePath: "/api/archive/validate-checksum",
+            methods: [apigwv2.HttpMethod.POST],
+            api: api.apiGatewayV2,
+        });
+
+        validateChecksum.role?.attachInlinePolicy(
+            new iam.Policy(this, "ValidateChecksumFnPolicy", {
+                statements: [
+                    ssmGetParameterPolicy,
+                    dynamoDbWritePolicy,
+                    dynamoDbReadOnlyPolicy,
+                    athenaPolicy,
+                    secretsmanagerGetSecretValue,
                 ],
             })
         );
