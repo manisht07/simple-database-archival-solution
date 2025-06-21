@@ -28,6 +28,7 @@ import "../../styles/base.scss";
 import "../../styles/top-navigation.scss";
 import { paginationLabels } from "../../components/labels";
 import { TableHeader } from "../../components/common-components";
+import jsPDF from 'jspdf';
 import Pagination from "@cloudscape-design/components/pagination";
 import { originsSelectionLabels } from "../../components/labels";
 import Table from "@cloudscape-design/components/table";
@@ -91,6 +92,20 @@ export function ValidationTable(
         setIsSelected(false);
         setLoading(true);
         getData();
+    };
+
+    const runValidation = async () => {
+        if (!isSelected) return;
+        const table = selectedItems[0].table;
+        await API.post('api', '/api/archive/validate', { body: { archive_id: archive.id, table } });
+        refresh();
+    };
+
+    const downloadReport = () => {
+        if (!isSelected) return;
+        const doc = new jsPDF();
+        doc.text(`Validation report for ${selectedItems[0].table}`, 10, 10);
+        doc.save('validation-report.pdf');
     };
 
     const [preferences, setPreferences] = useState({
@@ -293,6 +308,8 @@ export function ValidationTable(
                                     >
                                         Refresh
                                     </Button>
+                                    <Button onClick={runValidation} disabled={!isSelected}>Run Validation</Button>
+                                    <Button onClick={downloadReport} disabled={!isSelected}>Download Report</Button>
                                 </SpaceBetween>
                             }
                         />

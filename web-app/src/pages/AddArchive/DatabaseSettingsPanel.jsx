@@ -261,12 +261,18 @@ export default function DatabaseSettingsPanel({
                         stretch={true}
                         label={<span id="certificate-expiry-label">Oracle Schemas</span>}
                     >
-                        <Multiselect
-                            selectedOptions={selectedSchemas}
-                            options={schemaOptions}
-                            placeholder="Select schemas"
-                            onChange={({ detail }) => setSelectedSchemas(detail.selectedOptions)}
-                        />
+                        <SpaceBetween size="xs">
+                            <Multiselect
+                                selectedOptions={selectedSchemas}
+                                options={schemaOptions}
+                                placeholder="Select schemas"
+                                onChange={({ detail }) => setSelectedSchemas(detail.selectedOptions)}
+                            />
+                            <SpaceBetween direction="horizontal" size="xs">
+                                <Button onClick={() => setSelectedSchemas(schemaOptions)} disabled={schemaOptions.length === 0}>All</Button>
+                                <Button onClick={() => setSelectedSchemas([])} disabled={selectedSchemas.length === 0}>Clear</Button>
+                            </SpaceBetween>
+                        </SpaceBetween>
                     </FormField>
                 ) : (
                     <></>

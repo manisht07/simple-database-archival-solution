@@ -94,6 +94,27 @@ export function ViewJobs({
         setLoading(true);
     };
 
+    const startJob = async () => {
+        if (!isSelected) return;
+        const jobId = (selectedItems[0] as any).job_id;
+        await API.post('api', '/api/job/start', { body: { job_id: jobId } });
+        refresh();
+    };
+
+    const stopJob = async () => {
+        if (!isSelected) return;
+        const jobId = (selectedItems[0] as any).job_id;
+        await API.post('api', '/api/job/stop', { body: { job_id: jobId } });
+        refresh();
+    };
+
+    const terminateJob = async () => {
+        if (!isSelected) return;
+        const jobId = (selectedItems[0] as any).job_id;
+        await API.post('api', '/api/job/terminate', { body: { job_id: jobId } });
+        refresh();
+    };
+
     const [preferences] = useState({
         pageSize: 20,
     });
@@ -160,6 +181,9 @@ export function ViewJobs({
                                 <Button onClick={refresh} iconAlign="right" iconName="refresh">
                                     Refresh
                                 </Button>
+                                <Button onClick={() => startJob()} disabled={!isSelected}>Start</Button>
+                                <Button onClick={() => stopJob()} disabled={!isSelected}>Stop</Button>
+                                <Button onClick={() => terminateJob()} disabled={!isSelected}>Terminate</Button>
                             </SpaceBetween>
                         }
                     />
