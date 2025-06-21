@@ -243,7 +243,6 @@ export function ViewData(
                     .then(() => {
                         ace.config.set("useStrictCSP", true);
                         ace.config.set("loadWorkerFromBlob", false);
-                        ace.config.set("readOnly", false);
                         ace.config.set("maxLines", 0);
                         setAce(ace);
                         setAceLoading(false);
