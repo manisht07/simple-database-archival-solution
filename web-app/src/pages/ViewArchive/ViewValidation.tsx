@@ -181,7 +181,6 @@ export function ValidationTable(
                     .then(() => {
                         ace.config.set("useStrictCSP", true);
                         ace.config.set("loadWorkerFromBlob", false);
-                        ace.config.set("maxLines", 0);
 
                         // ace.config.set('basePath', '/app/');
                         setAce(ace);
